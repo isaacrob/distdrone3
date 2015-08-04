@@ -10,7 +10,7 @@ from picamera.array import PiRGBArray
 
 os.chdir("/home/pi")
 
-def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,width=720,height=480,scale=1.1,cascade="haarcascade_frontalface_alt2.xml"):
+def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,width=1200,height=800,scale=1.1,cascade="haarcascade_frontalface_alt2.xml"):
 	import sys, pickle, os,cv2,time,math,signal
 	pidfile=open('mypythonpid','w')
 	pickle.dump(os.getpid(),pidfile)
@@ -18,53 +18,53 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 	runstate=open('runstate','w')
 	pickle.dump(0,runstate)
 	runstate.close()
-	print(os.getpid())
+	print((os.getpid()))
 
 	c=Client(profile=profile)
 	dview=c[:]
 	numnodes=len(c.ids)
 	dview.block=False
-	def getmypid():
-		import pickle, os
-		try:
-			file=open('mypythonpid','r')
-			mypid=pickle.load(file)
-			file.close()
-			try:
-				os.kill(mypid,0)
-			except:
-				mypid=False
-		except:
-			mypid=False
-		return mypid
-	def getrunstate():
-		import pickle
-		try:
-			file=open('runstate','r')
-			state=pickle.load(file)
-			file.close()
-		except:
-			state=0
-		return state
-	dview["getrunstate"]=getrunstate
-	dview["getmypid"]=getmypid
-	dview.execute("mypid=getmypid()")
-	myippid=-1
-	for proc in psutil.process_iter():
-		if proc.name()=='ipengine':
-			myippid=proc.pid
+	#def getmypid():
+	#	import pickle, os
+	#	try:
+	#		file=open('mypythonpid','r')
+	#		mypid=pickle.load(file)
+	#		file.close()
+	#		try:
+	#			os.kill(mypid,0)
+	#		except:
+	#			mypid=False
+	#	except:
+	#		mypid=False
+	#	return mypid
+	#def getrunstate():
+	#	import pickle
+	#	try:
+	#		file=open('runstate','r')
+	#		state=pickle.load(file)
+	#		file.close()
+	#	except:
+	#		state=0
+	#	return state
+	#dview["getrunstate"]=getrunstate
+	#dview["getmypid"]=getmypid
+	#dview.execute("mypid=getmypid()")
+	#myippid=-1
+	#for proc in psutil.process_iter():
+	#	if proc.name()=='ipengine':
+	#		myippid=proc.pid
 	ippids=[]
-	dview.execute("import os;enginepid=os.getpid()")
+	#dview.execute("import os;enginepid=os.getpid()")
 	for i in range(numnodes):
-		if not myippid==c[c.ids[i]]['enginepid']:
-			ippids.append(c.ids[i])
-	dview=c.activate(ippids)
+		#if not myippid==c[c.ids[i]]['enginepid']:
+		ippids.append(c.ids[i])
+	#dview=c.activate(ippids)
 	dview.execute('import cv2,sys,time,math,cPickle,signal')
 	
-	print(dview)
+	#print(dview)
 	numnodes=len(dview)
-	rejects=len(c.ids)-numnodes
-	print("configured for this pi by rejecting a certain engine")
+	#rejects=len(c.ids)-numnodes
+	#print("configured for this pi by rejecting a certain engine")
 	#print sys.platform
 	if sys.platform=='darwin':
 		facedetector=cv2.CascadeClassifier("/usr/local/Cellar/opencv/2.4.9/share/OpenCV/haarcascades/"+cascade)
@@ -128,25 +128,26 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 		numnodes=len(ippids)
 		img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 		dview['img']=img
-		dview.execute('img=img.copy();mypid=getmypid()')
+		print("passed image")
+		dview.execute('img=img.copy()')#;mypid=getmypid()')
 		#dview.execute("mypid=getmypid()")
 		runstate=open('runstate','w')
 		pickle.dump(1,runstate)
 		runstate.close()
-		dview.execute("state=getrunstate()") #may be redundant but avoids a lock
+		#dview.execute("state=getrunstate()") #may be redundant but avoids a lock
 		#for i in range(numnodes):
 		#	print c[c.ids[i]]["state"]
-		dview.execute("if mypid and not state: os.kill(mypid,signal.SIGTSTP)")
+		#dview.execute("if mypid and not state: os.kill(mypid,signal.SIGTSTP)")
 		dview.execute("exectime=time.time();myfaces=haarface.detectMultiScale(img,scale,4,1,thismin,thismax);exectime=time.time()-exectime;endtime=time.time()",block=False)
 		faces=set()
 		thistimes=[None]*numnodes
 		thistimesremote=[None]*numnodes
 		for i in range(numnodes):
 			thistimes[i]=time.time()
-			print("checking engine "+str(ippids[i]))
+			print(("checking engine "+str(ippids[i])))
 			thisfaces=c[ippids[i]]["myfaces"]
 			thistimesremote[i]=c[ippids[i]]["exectime"]
-			print(len(thisfaces))
+			print((len(thisfaces)))
 			if len(thisfaces)>0:
 				for face in thisfaces:
 					faces.add(tuple(face))
@@ -162,7 +163,7 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 		origlist=facelist
 		testlennew=0
 		print("faces found: ")
-		print(len(origlist))
+		print((len(origlist)))
 		while not testlennew==testlen:
 			testlen=len(facelist)
 			for first in range(len(facelist)):
@@ -187,9 +188,9 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 		finallist=facelist
 		duptime=time.time()-duptime
 		print("faces found after removing likely duplicates: ")
-		print(len(finallist))
+		print((len(finallist)))
 		starttime=time.time()-starttime
-		print("min/avg/max/regtime/tottime: "+str(min(thistimesremote))+"/"+str(sum(thistimesremote)/numnodes)+"/"+str(max(thistimesremote))+"/"+str(starttime)+"/"+str(sum(thistimesremote)))
+		print(("min/avg/max/regtime/tottime: "+str(min(thistimesremote))+"/"+str(sum(thistimesremote)/numnodes)+"/"+str(max(thistimesremote))+"/"+str(starttime)+"/"+str(sum(thistimesremote))))
 
 		if serial=='yes':
 			serialtime=time.time()
@@ -197,7 +198,7 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 			serialtime=time.time()-serialtime
 			print(serialtime)
 		
-		dview.execute("if mypid: os.kill(mypid,signal.SIGCONT)")
+		#dview.execute("if mypid: os.kill(mypid,signal.SIGCONT)")
 		#for i in range(numnodes):
 		#	print c[c.ids[i]]['mypid']
 		runstate=open('runstate','w')
@@ -219,8 +220,8 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 		if message:
 			if message=="update":
 				sumlist[0]=img[xstart:(xstart*3),ystart:(ystart*3),:].sum()
-                                std=stats.tstd(sumlist)
-                                avg=sum(sumlist)/n
+				std=stats.tstd(sumlist)
+				avg=sum(sumlist)/n
 				return
 			sumlist=[None]*n
 			def calibcam(n,sumlist):
@@ -229,7 +230,7 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 					yield stream
 					stream.seek(0)
 					fwidth = (width + 31) // 32 * 32
-				        fheight = (height + 15) // 16 * 16
+					fheight = (height + 15) // 16 * 16
 					#starttime=time.time()
 					img=np.fromstring(stream.getvalue(), dtype=np.uint8).reshape((fheight, fwidth, 3))[:height, :width, :]
 					#print str((time.time()-starttime)*1000)+" ms for reading the image"
@@ -255,13 +256,13 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 		thisz=(img[xstart:(xstart*3),ystart:(ystart*3),:].sum()-avg)/std
 		#print thisz
 		if abs(thisz)>threshold:
-			print("\nsomething weird, zscore="+str(thisz)+" at "+time.strftime("%a, %d %b %H:%M:%S", time.localtime()))
+			print(("\nsomething weird, zscore="+str(thisz)+" at "+time.strftime("%a, %d %b %H:%M:%S", time.localtime())))
 			return True
 
-                if framenum%10==0:
-                        sumlist[0]=img[xstart:(xstart*3),ystart:(ystart*3),:].sum()
-                        std=stats.tstd(sumlist)
-                        avg=sum(sumlist)/n
+		if framenum%10==0:
+			sumlist[0]=img[xstart:(xstart*3),ystart:(ystart*3),:].sum()
+			std=stats.tstd(sumlist)
+			avg=sum(sumlist)/n
 
 		return False
 	
@@ -312,7 +313,7 @@ def picamtrigger(profile='picluster',threshold=15,n=100,serial='no',show=False,w
 			framenum=framenum+1
 			
 			if framenum%(10*numnodes)==0:
-				if not len(c.ids)-len(oldids)==rejects:
+				if not len(c.ids)==len(oldids):
 					print("cluster changed")
 					numnodes=len(oldids)
 					dview=c[:]
@@ -369,7 +370,7 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 	runstate=open('runstate','w')
 	pickle.dump(0,runstate)
 	runstate.close()
-	print(os.getpid())
+	print((os.getpid()))
 	#context=zmq.Context()
 	#pubsocket=context.socket(zmq.PUB)
 	#port=5556
@@ -433,7 +434,7 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 	numnodes=len(dview)
 	rejects=len(c.ids)-numnodes
 	print("configured for this pi by rejecting a certain engine")
-	print(sys.platform)
+	print((sys.platform))
 	if sys.platform=='darwin':
 		facedetector=cv2.CascadeClassifier("/usr/local/Cellar/opencv/2.4.9/share/OpenCV/haarcascades/haarcascade_frontalface_alt2.xml")
 	elif sys.platform=='linux2':
@@ -501,10 +502,10 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 		thistimesremote=[None]*numnodes
 		for i in range(numnodes):
 			thistimes[i]=time.time()
-			print("checking engine "+str(ippids[i]))
+			print(("checking engine "+str(ippids[i])))
 			thisfaces=c[ippids[i]]["myfaces"]
 			thistimesremote[i]=c[ippids[i]]["exectime"]
-			print(len(thisfaces))
+			print((len(thisfaces)))
 			if len(thisfaces)>0:
 				for face in thisfaces:
 					faces.add(tuple(face))
@@ -519,7 +520,7 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 		testlen=len(facelist)
 		origlist=facelist
 		testlennew=0
-		print(len(origlist))
+		print((len(origlist)))
 		while not testlennew==testlen:
 			testlen=len(facelist)
 			for first in range(len(facelist)):
@@ -543,9 +544,9 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 			donttest=[]
 		finallist=facelist
 		duptime=time.time()-duptime
-		print(len(finallist))
+		print((len(finallist)))
 		starttime=time.time()-starttime
-		print("min/avg/max/regtime/tottime: "+str(min(thistimesremote))+"/"+str(sum(thistimesremote)/numnodes)+"/"+str(max(thistimesremote))+"/"+str(starttime)+"/"+str(sum(thistimesremote)))
+		print(("min/avg/max/regtime/tottime: "+str(min(thistimesremote))+"/"+str(sum(thistimesremote)/numnodes)+"/"+str(max(thistimesremote))+"/"+str(starttime)+"/"+str(sum(thistimesremote))))
 
 		if serial=='yes':
 			serialtime=time.time()
@@ -598,7 +599,7 @@ def findfaceswithtrigger(profile='picluster',threshold=15,n=100,serial='no',show
 		#	except:
 		#		break
 		if abs(thisz)>threshold:
-			print("something weird, zscore="+str(thisz))
+			print(("something weird, zscore="+str(thisz)))
 			time.sleep(.5)
 		#	pubsocket.send("need quiet? yes")
 			retval,newimg=cam.read() #works well on mac, maybe not pis...
@@ -707,8 +708,8 @@ def getalignface(facefinder,eyefinder,nosefinder,cam):
 			cv2.waitKey(35)
 			eyes=eyefinder.detectMultiScale(thisface,1.1,30,1)
 			noses=nosefinder.detectMultiScale(thisface,1.1,20,1)
-			print("eyes: "+str(eyes))
-			print("noses: "+str(noses))
+			print(("eyes: "+str(eyes)))
+			print(("noses: "+str(noses)))
 			if len(noses)>0:
                         	maxnosesize=max([w for (x,y,h,w) in noses])
                         	biggestnose=[[x,y,h,w] for (x,y,h,w) in noses if w==maxnosesize][0]
@@ -718,8 +719,8 @@ def getalignface(facefinder,eyefinder,nosefinder,cam):
 				for eye in eyes:
 					if not (eye[0]>(biggestnose[0]-5) and eye[0]<(biggestnose[0]+biggestnose[3]+5) and eye[1]>(biggestnose[1]-5) and eye[1]<(biggestnose[1]+biggestnose[2]+5)):
 						finaleyes.append(eye)
-				print("eyes: "+str(finaleyes))
-				print("noses: "+str(noses))
+				print(("eyes: "+str(finaleyes)))
+				print(("noses: "+str(noses)))
 				for (x,y,h,w) in finaleyes:
 					cv2.rectangle(thisface,(x,y),(x+w,y+h),(0,255,255),1)
 				for (x,y,h,w) in [biggestnose]:
@@ -735,7 +736,7 @@ def getalignface(facefinder,eyefinder,nosefinder,cam):
 				print("only found an eye and a nose, working with them")
 				eye=eyes[0]
 				nose=noses[0]
-				print(eye, nose)
+				print((eye, nose))
 				eyenosedist=np.sqrt((eye[0]-nose[0])**2 + (eye[1]-nose[1])**2)
 				if nose[1]<eye[1]:
 					"apparently the only nose is above the only eye, aborting"
@@ -759,12 +760,12 @@ def getalignface(facefinder,eyefinder,nosefinder,cam):
 				for eye in eyes:
                                         if not (eye[0]>(biggestnose[0]-5) and eye[0]<(biggestnose[0]+biggestnose[3]+5) and eye[1]>(biggestnose[1]-5) and eye[1]<(biggestnose[1]+biggestnose[2]+5)):
                                                 finaleyes.append(eye)
-                                print("eyes: "+str(finaleyes))
-                                print("noses: "+str(noses))
-                                for (x,y,h,w) in finaleyes:
-                                        cv2.rectangle(thisface,(x,y),(x+w,y+h),(0,255,255),1)
-                                for (x,y,h,w) in [biggestnose]:
-                                        cv2.rectangle(thisface,(x,y),(x+w,y+h),(255,255,0),1)
+				print(("eyes: "+str(finaleyes)))
+				print(("noses: "+str(noses)))
+				for (x,y,h,w) in finaleyes:
+					cv2.rectangle(thisface,(x,y),(x+w,y+h),(0,255,255),1)
+				for (x,y,h,w) in [biggestnose]:
+					cv2.rectangle(thisface,(x,y),(x+w,y+h),(255,255,0),1)
 			else: #add parsing for more than 2 detected eyes without a nose
 				print("feature detection went wrong")
 				return []
@@ -810,7 +811,7 @@ def getalignface(facefinder,eyefinder,nosefinder,cam):
 				cv2.imshow("thisface border",thisface)
 				rotationangle=np.arctan(float(eyetriangle[1])/float(eyetriangle[0]))
 				rotationmat=cv2.getRotationMatrix2D(facecenter,rotationangle*180/np.pi,1.0)
-				print(border[0])
+				print((border[0]))
 				bordercenteroffset=[border[0][0]-facecenter[0],border[0][1]-facecenter[1]]
 				print(bordercenteroffset)
 				borderoffsetafterrotation=[bordercenteroffset[0]*np.cos(rotationangle)+bordercenteroffset[1]*np.sin(rotationangle),bordercenteroffset[0]*np.sin(rotationangle)-bordercenteroffset[1]*np.cos(rotationangle)-borderlength]
@@ -846,12 +847,12 @@ def makepredictor():
 	eyefinder=cv2.CascadeClassifier("/home/pi/opencv-2.4.9/data/haarcascades/haarcascade_eye.xml")
 	nosefinder=cv2.CascadeClassifier("/home/pi/opencv-2.4.9/data/haarcascades/haarcascade_mcs_nose.xml")
 	cam=cv2.VideoCapture(-1)
-	while not input("capture image? y/n ")=='n':
+	while not eval(input("capture image? y/n "))=='n':
 		face=getalignface(facefinder,eyefinder,nosefinder,cam)
 		if len(face)>0:
-			if not input("is this the correct face? y/n ")=='n':
+			if not eval(input("is this the correct face? y/n "))=='n':
 				imgset.append(face)
-				labels.append(int(input("who is this? (int) ")))
+				labels.append(int(eval(input("who is this? (int) "))))
 
 	labels=np.array(labels)
 	facerec=cv2.createLBPHFaceRecognizer()

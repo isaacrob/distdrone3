@@ -13,9 +13,12 @@ def _post_install(dir):
 		call(['chown','pi','/home/pi/.ipython'])
 		call(['chmod','777','/home/pi/.ipython'])
 		os.chdir('/home/pi/.ipython')
-	call(['sudo','apt-get','-y','install','python-pygame'])
-	call(['rm','-rf','profile_picluster'])
-	call(['sudo','-u','pi','git','clone','https://github.com/isaacrob/picluster','profile_picluster'])
+	try:
+		import pygame
+	except:
+		print("building without pygame")
+	call(['rm','-rf','profile_picluster3'])
+	call(['sudo','-u','pi','git','clone','https://github.com/isaacrob/picluster3','profile_picluster3'])
 	s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 	s.connect(('8.8.8.8',80))
 	myip=s.getsockname()[0]
