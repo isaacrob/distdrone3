@@ -225,8 +225,10 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 			return False
 		
 	def buttontrigger():
-		mess=input("press enter to trigger ")
-		return True
+		try:
+			mess=input("press enter to trigger ")
+		except:
+			return True
 
 	def stdtrigger(img,framenum=1,threshold=threshold,message=False):
 		try:
