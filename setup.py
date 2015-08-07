@@ -22,7 +22,7 @@ def _post_install(dir):
 	s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 	s.connect(('8.8.8.8',80))
 	myip=s.getsockname()[0]
-	os.chdir('profile_picluster')
+	os.chdir('profile_picluster3')
 	call(['sudo','-u','pi','python','writeremotehosts.py','--controller_ip='+myip])
 
 class install(_install):
