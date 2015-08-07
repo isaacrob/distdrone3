@@ -34,7 +34,7 @@ def readme():
 	with open("README.txt") as f:
 		return f.read()
 
-setup(name="distdrone",
+setup(name="distdrone3",
 	cmdclass={'install':install},
 	version="0.0.1",
 	description="package to drive parallel drone swarm",

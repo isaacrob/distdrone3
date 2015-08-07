@@ -10,7 +10,7 @@ from picamera.array import PiRGBArray
 
 os.chdir("/home/pi")
 
-def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,width=1200,height=800,scale=1.1,cascade="haarcascade_frontalface_alt2.xml"):
+def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,width=1200,height=800,scale=1.1,cascade="haarcascade_frontalface_alt2.xml",trigger="blob"):
 	import sys, pickle, os,cv2,time,math,signal
 	pidfile=open('mypythonpid','w')
 	pickle.dump(os.getpid(),pidfile)
@@ -205,7 +205,29 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 		pickle.dump(0,runstate)
 		runstate.close()
 		return finallist
+
+	def blobtrigger(img,rw=300,rh=200,color=False,blobsize=.0006):
+		global blobdet
+		try:
+			blobdet.getParams()
+		except:
+			params=cv2.SimpleBlobDetector_Params()
+			#options here
+			blobdet=cv2.SimpleBlobDetector(params)
+		img=cv2.cvtColor(cv2.resize(img,(rw,rh)),cv2.COLOR_RGB2GRAY)
+		kp=blobdet.detect(img)
+		if len(kp)==0:
+			return False
+		bigpercent=max([p.size for p in kp])/(rw*rh)
+		if bigpercent>=blobsize:
+			return True
+		else:
+			return False
 		
+	def buttontrigger():
+		mess=input("press enter to trigger ")
+		return True
+
 	def stdtrigger(img,framenum=1,threshold=threshold,message=False):
 		try:
 			global avg
@@ -271,7 +293,14 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 	
 	print("calibrating chosen trigger...")
 
-	stdtrigger(None,message="init")
+	if trigger=="std":
+		stdtrigger(None,message="init")
+	elif trigger=="blob":
+		print("do not need to initialize blob")
+	elif trigger=="button":
+		print("do not need to initialize button")
+	else:
+		sys.exit("do not recognize trigger")
 
 	print("\nstarting detection")
 	
@@ -293,7 +322,15 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 			#print "getting image"
 			img = np.fromstring(stream.getvalue(), dtype=np.uint8).reshape((fheight, fwidth, 3))[:height, :width, :]
 			#print "got the image, analyzing it"
-			if stdtrigger(img,framenum,threshold):
+			if trigger=="std":
+				condition=stdtrigger(img,framenum,threshold)
+			elif trigger=="blob":
+				condition=blobtrigger(img)
+			elif trigger=="button":
+				condition=buttontrigger()
+			else:
+				sys.exit("do not recognize trigger")
+			if condition:
 				print("searching for faces...")
 				newimg=img.copy()
 				faces=findfaces(newimg,scale,serial)
@@ -309,7 +346,8 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 						cv2.imshow("obj not found",newimg)
 				if show==True:
 					cv2.waitKey(1)
-				stdtrigger(img,message="update")
+				if trigger=="std":
+					stdtrigger(img,message="update")
 			framenum=framenum+1
 			
 			if framenum%(10*numnodes)==0:
