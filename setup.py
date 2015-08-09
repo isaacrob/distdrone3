@@ -43,7 +43,7 @@ setup(name="distdrone3",
 	author_email="isaacrob@me.com",
 	license="GNU",
 	packages=["distdrone3","distdrone3.motion","distdrone3.imgproc"],
-	scripts=["bin/trigger3","bin/testpredictor3","bin/centersearch3","bin/installdronedeps3"],
+	scripts=["bin/trigger3","bin/centersearch3","bin/installdronedeps3"],
 	keywords=['drone','OpenCV','IPython','parallel'],
 	install_requires=['ipython','psutil>=3','paramiko>=1.15','click>=4','pyzmq','dill','picamera'],
 	zip_safe=False)
