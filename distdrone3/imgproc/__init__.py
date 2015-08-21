@@ -1,6 +1,6 @@
 #from .imgproc import *
 from . import gentimedist as gen
-import cv2, time, sys, pickle, zmq, os, copy, psutil, io
+import cv2, time, sys, pickle, zmq, os, copy, psutil, io, zipfile
 from math import log
 from IPython.parallel import Client
 from scipy import stats
@@ -59,7 +59,7 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 		#if not myippid==c[c.ids[i]]['enginepid']:
 		ippids.append(c.ids[i])
 	#dview=c.activate(ippids)
-	dview.execute('import cv2,sys,time,math,cPickle,signal')
+	dview.execute('import cv2,sys,time,math,cPickle,signal,zipfile')
 	
 	#print(dview)
 	numnodes=len(dview)
@@ -127,9 +127,12 @@ def picamtrigger(profile='picluster3',threshold=15,n=100,serial='no',show=False,
 		starttime=time.time()
 		numnodes=len(ippids)
 		img=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-		dview['img']=img
+		#imgpass=io.BytesIO(img)
+		#imgzip=zipfile.ZipFile(imgpass,"a")
+		retval,imgenc=cv2.imencode(".jpg",img)
+		dview['imgenc']=imgenc
 		print("passed image")
-		dview.execute('img=img.copy()')#;mypid=getmypid()')
+		dview.execute('img=cv2.imdecode(imgenc,0)')#;mypid=getmypid()')
 		#dview.execute("mypid=getmypid()")
 		runstate=open('runstate','w')
 		pickle.dump(1,runstate)
